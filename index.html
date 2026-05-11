@@ -12,7 +12,6 @@
             --secondary: #03dac6;
             --error: #cf6679;
             --text: #e0e0e0;
-            --peace-btn: #333333;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -25,6 +24,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
+            height: -webkit-fill-available; /* Fix for mobile browser bars */
             overflow: hidden;
         }
 
@@ -32,10 +32,13 @@
         .active { display: flex; }
 
         /* --- SETUP SCREEN --- */
-        #setup-screen { justify-content: space-between; }
-        #setup-screen h2 { margin: 0 0 10px 0; color: var(--primary); }
+        #setup-screen { display: none; flex-direction: column; }
+        #setup-screen.active { display: flex; }
+        
+        #setup-screen h2 { margin: 0 0 10px 0; color: var(--primary); flex-shrink: 0; }
+        
         textarea {
-            flex: 1;
+            flex-grow: 1; /* Takes remaining space */
             background: var(--surface);
             color: var(--text);
             border: 2px solid #333;
@@ -44,15 +47,28 @@
             font-size: 1rem;
             margin-bottom: 15px;
             outline: none;
+            min-height: 100px;
         }
-        .start-area { height: 80px; }
+
+        .start-area { flex-shrink: 0; padding-bottom: 10px; }
+        .btn-start { 
+            background: var(--primary); 
+            color: #000; 
+            width: 100%; 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            height: 70px; 
+            border: none; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
 
         /* --- PRACTICE SCREEN --- */
-        #top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 40px; }
+        #top-nav { display: flex; justify-content: space-between; align-items: center; height: 40px; flex-shrink: 0; margin-bottom: 5px; }
         .btn-small { background: #333; color: #888; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; border: none; }
 
         #main-tap-area {
-            flex: 1;
+            flex-grow: 1;
             background: var(--surface);
             border-radius: 20px;
             display: flex;
@@ -63,68 +79,64 @@
             cursor: pointer;
             padding: 20px;
             overflow-y: auto;
+            border: 1px solid #252525;
         }
 
-        #pinyin-display { font-size: 1.8rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
-        #meaning-display { font-size: 1rem; opacity: 0.6; margin-bottom: 15px; }
-        #char-display { font-size: 4.5rem; letter-spacing: 8px; min-height: 5.5rem; }
+        #pinyin-display { font-size: 2rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
+        #meaning-display { font-size: 1.1rem; opacity: 0.6; margin-bottom: 10px; }
+        #char-display { font-size: 5rem; letter-spacing: 10px; min-height: 6rem; line-height: 1.2; }
         
         #example-display { 
             margin-top: 15px; 
-            font-size: 0.85rem; 
-            padding: 12px; 
+            font-size: 0.95rem; 
+            padding: 15px; 
             background: rgba(0,0,0,0.4); 
             border-radius: 10px;
-            display: none; /* Auto-shown on finish */
+            display: none; 
             width: 100%;
         }
 
-        /* --- BUTTONS --- */
-        .controls-area { padding-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        /* --- BUTTON ZONE --- */
+        .controls-area { flex-shrink: 0; padding: 15px 0; }
         
-        .grading-bar { display: none; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .grading-bar { display: none; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .active-grading { display: grid; }
 
         button.huge { 
-            height: 100px; /* Bigger buttons */
-            font-size: 1.4rem; 
-            font-weight: bold; 
+            height: 140px; /* HUGE BUTTONS */
+            font-size: 1.6rem; 
+            font-weight: 900; 
             border: none; 
-            border-radius: 15px; 
+            border-radius: 20px; 
             text-transform: uppercase; 
         }
         .btn-correct { background: var(--secondary); color: #000; }
         .btn-wrong { background: var(--error); color: #000; }
         
-        .btn-start { background: var(--primary); color: #000; width: 100%; font-size: 1.4rem; font-weight: bold; height: 60px; border: none; border-radius: 15px; }
-
-        /* PEACE MODE TOGGLE */
         .btn-peace-toggle {
-            background: transparent;
-            color: #333;
-            border: 1px solid #222;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 0.8rem;
+            background: #1a1a1a;
+            color: #444;
+            border: 1px solid #252525;
+            padding: 15px;
+            width: 100%;
+            border-radius: 12px;
+            font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
 
-        /* --- PEACE MODE STATE --- */
+        /* --- PEACE MODE OVERRIDE --- */
         body.peace-active #top-nav,
         body.peace-active #main-tap-area,
         body.peace-active .grading-bar {
-            visibility: hidden;
+            opacity: 0;
             pointer-events: none;
         }
         
-        /* Keep the toggle button visible and interactive during peace mode */
         body.peace-active .btn-peace-toggle {
-            visibility: visible !important;
-            pointer-events: auto !important;
+            color: #666;
             border-color: #333;
-            color: #555;
-            margin-top: -100px; /* Pull it up slightly in the void */
+            background: #111;
         }
     </style>
 </head>
@@ -132,19 +144,19 @@
 
     <!-- SETUP SCREEN -->
     <div id="setup-screen" class="screen active">
-        <h2>Vocabulary Input</h2>
-        <textarea id="input-data" placeholder="Paste your list here (Word, Pinyin, Meaning, Sentence...)"></textarea>
+        <h2>Input Word List</h2>
+        <textarea id="input-data" placeholder="Paste your words here..."></textarea>
         <div class="start-area">
-            <button class="btn-start" onclick="startPractice()">Start Session</button>
+            <button class="btn-start" onclick="startPractice()">START SESSION</button>
         </div>
     </div>
 
     <!-- PRACTICE SCREEN -->
     <div id="practice-screen" class="screen">
         <div id="top-nav">
-            <button class="btn-small" onclick="goBack()">← Setup</button>
-            <div id="stats" style="color: var(--secondary); font-weight: bold;">Phase 1 | 0/10</div>
-            <div style="width: 60px;"></div> <!-- Spacer -->
+            <button class="btn-small" onclick="goBack()">← SETUP</button>
+            <div id="stats" style="color: var(--secondary); font-weight: bold; font-family: monospace;">PHASE 1 | 0/10</div>
+            <div style="width: 60px;"></div>
         </div>
 
         <div id="main-tap-area" onclick="handleTap()">
@@ -153,16 +165,16 @@
             <div id="char-display"></div>
             
             <div id="example-display">
-                <div id="ex-cn"></div>
-                <div id="ex-py" style="color:var(--primary); margin: 4px 0;"></div>
-                <div id="ex-en" style="opacity:0.7"></div>
+                <div id="ex-cn" style="font-size: 1.1rem; margin-bottom: 5px;"></div>
+                <div id="ex-py" style="color:var(--primary); margin-bottom: 5px;"></div>
+                <div id="ex-en" style="opacity:0.7; font-style: italic;"></div>
             </div>
         </div>
 
         <div class="controls-area">
             <div id="grading-bar" class="grading-bar">
-                <button class="huge btn-wrong" onclick="grade(false)">Wrong</button>
-                <button class="huge btn-correct" onclick="grade(true)">Correct</button>
+                <button class="huge btn-wrong" onclick="grade(false)">WRONG</button>
+                <button class="huge btn-correct" onclick="grade(true)">RIGHT</button>
             </div>
             
             <button id="peace-toggle-btn" class="btn-peace-toggle" onclick="togglePeace()">
@@ -179,18 +191,18 @@
 
     function startPractice() {
         const text = document.getElementById('input-data').value.trim();
-        if(!text) return alert("Paste words first!");
+        if(!text) return alert("Please paste words first.");
 
         const blocks = text.split(/\n\s*\n/);
         words = blocks.map(block => {
             const lines = block.split('\n').map(l => l.trim());
             return {
-                char: lines[0],
-                pinyin: lines[1],
-                meaning: lines[2],
-                exCn: lines[3],
-                exPy: lines[4],
-                exEn: lines[5],
+                char: lines[0] || "",
+                pinyin: lines[1] || "",
+                meaning: lines[2] || "",
+                exCn: lines[3] || "",
+                exPy: lines[4] || "",
+                exEn: lines[5] || "",
                 count: 0
             };
         });
@@ -212,7 +224,7 @@
             if (pool.length === 0) { phase = 2; return nextWord(); }
         } else {
             pool = words.filter(w => w.count < 10);
-            if (pool.length === 0) { alert("Session Done!"); return goBack(); }
+            if (pool.length === 0) { alert("Session Complete!"); return goBack(); }
         }
 
         currentWord = pool[Math.floor(Math.random() * pool.length)];
@@ -231,7 +243,6 @@
     }
 
     function handleTap() {
-        // Don't allow taps if peace mode is active (to prevent accidental reveals)
         if(document.body.classList.contains('peace-active')) return;
 
         const cleanChars = Array.from(currentWord.char.replace(/[\s+]/g, ''));
@@ -252,7 +263,7 @@
     }
 
     function updateStats() {
-        document.getElementById('stats').innerText = `Phase ${phase} | ${currentWord.count}/10`;
+        document.getElementById('stats').innerText = `PHASE ${phase} | ${currentWord.count}/10`;
     }
 
     function togglePeace() {
