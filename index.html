@@ -21,31 +21,20 @@
             color: var(--text);
             font-family: sans-serif;
             margin: 0;
-            /* Use dvh (Dynamic Viewport Height) for Chrome Android mobile */
-            height: 100vh;
             height: 100dvh;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
-        /* Standard Screen Layout */
-        .screen { 
-            display: none; 
-            flex-direction: column; 
-            height: 100%; 
-            width: 100%; 
-            padding: 15px; 
-            position: relative;
-        }
+        .screen { display: none; flex-direction: column; height: 100%; width: 100%; padding: 15px; position: relative; }
         .active { display: flex; }
 
-        /* --- SETUP SCREEN (Optimized for Chrome Android) --- */
+        /* --- SETUP SCREEN --- */
         #setup-screen { justify-content: flex-start; }
-        
         textarea {
             width: 100%;
-            flex: 1; /* Grows to use all available space */
+            flex: 1;
             background: var(--surface);
             color: var(--text);
             border: 2px solid #333;
@@ -56,13 +45,6 @@
             outline: none;
             resize: none;
         }
-
-        .start-btn-wrap { 
-            height: 70px; 
-            width: 100%; 
-            padding-bottom: 10px;
-        }
-        
         .btn-start { 
             height: 60px;
             background: var(--primary); 
@@ -72,20 +54,13 @@
             font-weight: bold; 
             border: none; 
             border-radius: 15px;
+            margin-bottom: 10px;
         }
 
         /* --- PRACTICE SCREEN --- */
-        #top-nav { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            height: 45px; 
-            z-index: 10;
-        }
-        
-        .btn-small { background: #333; color: #888; padding: 8px 14px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: bold; }
+        #top-nav { display: flex; justify-content: space-between; align-items: center; height: 45px; z-index: 10; }
+        .btn-small { background: #333; color: #888; padding: 8px 14px; border-radius: 8px; border: none; font-size: 0.85rem; }
 
-        /* MAIN TAP AREA */
         #main-tap-area {
             flex: 1;
             display: flex;
@@ -99,7 +74,7 @@
 
         #pinyin-display { font-size: 2.2rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
         #meaning-display { font-size: 1.2rem; opacity: 0.6; margin-bottom: 15px; }
-        #char-display { font-size: 6.5rem; letter-spacing: 8px; min-height: 7.5rem; line-height: 1; transition: opacity 0.2s; }
+        #char-display { font-size: 6.5rem; letter-spacing: 8px; min-height: 7.5rem; line-height: 1; }
         
         #example-display { 
             margin-top: 15px; 
@@ -108,56 +83,43 @@
             border-radius: 12px;
             display: none; 
             width: 100%;
-            pointer-events: none;
             text-align: left;
         }
 
-        /* BUTTON ZONE (Absolute within practice screen to stay clear of nav bars) */
         #controls-container {
             width: 100%;
-            padding-bottom: 70px; /* Space for the Eye icon */
+            padding-bottom: 80px; 
             z-index: 5;
             pointer-events: none;
         }
         
-        .grading-bar { 
-            display: none; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 15px; 
-            pointer-events: auto; 
-        }
+        .grading-bar { display: none; grid-template-columns: 1fr 1fr; gap: 15px; pointer-events: auto; }
         .active-grading { display: grid; }
 
-        button.huge { 
-            height: 120px; 
-            font-size: 1.8rem; 
-            font-weight: 900; 
-            border: none; 
-            border-radius: 20px; 
-        }
+        button.huge { height: 120px; font-size: 1.8rem; font-weight: 900; border: none; border-radius: 20px; }
         .btn-correct { background: var(--secondary); color: #000; }
         .btn-wrong { background: var(--error); color: #000; }
         
-        /* THE EYE - FIXED TO PREVENT DISAPPEARING */
+        /* FAINT EYE BUTTON */
         #peace-toggle-btn {
             position: absolute;
-            bottom: 10px;
+            bottom: 15px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(255,255,255,0.08);
-            border: 1px solid #333;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
+            background: transparent;
+            border: none;
+            width: 60px;
+            height: 60px;
             font-size: 1.6rem;
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 999;
+            opacity: 0.15; /* Very faint */
             cursor: pointer;
         }
 
-        /* PEACE MODE STATE */
+        /* PEACE MODE */
         body.peace-active #top-nav,
         body.peace-active #pinyin-display,
         body.peace-active #meaning-display,
@@ -167,22 +129,16 @@
             opacity: 0 !important;
             pointer-events: none !important;
         }
-        
-        body.peace-active #main-tap-area { background: transparent; }
     </style>
 </head>
 <body onclick="handleGlobalClick(event)">
 
-    <!-- SETUP SCREEN -->
     <div id="setup-screen" class="screen active">
-        <h2 style="margin:0 0 10px 0;">Chinese Vocab Input</h2>
-        <textarea id="input-data" placeholder="Paste your Chinese words here..."></textarea>
-        <div class="start-btn-wrap">
-            <button class="btn-start" onclick="startPractice()">START SESSION</button>
-        </div>
+        <h2 style="margin:0 0 10px 0;">Vocabulary Input</h2>
+        <textarea id="input-data" placeholder="Paste your words here..."></textarea>
+        <button class="btn-start" onclick="startPractice()">START SESSION</button>
     </div>
 
-    <!-- PRACTICE SCREEN -->
     <div id="practice-screen" class="screen">
         <div id="top-nav">
             <button class="btn-small" onclick="goBack()">← SETUP</button>
@@ -217,11 +173,11 @@
     let currentWord = null;
     let revealIdx = 0;
     let phase = 1;
+    let finalRevealReady = false;
 
     function startPractice() {
         const text = document.getElementById('input-data').value.trim();
         if(!text) return alert("Paste words first!");
-
         const blocks = text.split(/\n\s*\n/);
         words = blocks.map(block => {
             const lines = block.split('\n').map(l => l.trim());
@@ -235,7 +191,6 @@
                 count: 0
             };
         });
-
         document.getElementById('setup-screen').classList.remove('active');
         document.getElementById('practice-screen').classList.add('active');
         nextWord();
@@ -247,21 +202,19 @@
     }
 
     function nextWord() {
-        let pool = [];
-        if (phase === 1) {
-            pool = words.filter(w => w.count < 5);
-            if (pool.length === 0) { phase = 2; return nextWord(); }
-        } else {
-            pool = words.filter(w => w.count < 10);
-            if (pool.length === 0) { alert("Session Complete!"); return goBack(); }
+        let pool = (phase === 1) ? words.filter(w => w.count < 5) : words.filter(w => w.count < 10);
+        if (pool.length === 0) {
+            if(phase === 1) { phase = 2; return nextWord(); }
+            alert("Session Complete!"); return goBack();
         }
 
         currentWord = pool[Math.floor(Math.random() * pool.length)];
         revealIdx = 0;
+        finalRevealReady = false;
         
+        document.getElementById('char-display').innerText = "";
         document.getElementById('pinyin-display').innerText = currentWord.pinyin;
         document.getElementById('meaning-display').innerText = currentWord.meaning;
-        document.getElementById('char-display').innerText = "";
         document.getElementById('ex-cn').innerText = currentWord.exCn;
         document.getElementById('ex-py').innerText = currentWord.exPy;
         document.getElementById('ex-en').innerText = currentWord.exEn;
@@ -271,21 +224,26 @@
         updateStats();
     }
 
-    // This handles the tap-anywhere logic
     function handleGlobalClick(e) {
-        // Don't trigger if setup screen or peace mode is active
         if (!document.getElementById('practice-screen').classList.contains('active')) return;
         if (document.body.classList.contains('peace-active')) return;
 
         const cleanChars = Array.from(currentWord.char.replace(/[\s+]/g, ''));
+        
+        // 1. Reveal characters one by one
         if (revealIdx < cleanChars.length) {
             document.getElementById('char-display').innerText += cleanChars[revealIdx];
             revealIdx++;
-            
+            // If that was the last character, prepare the final reveal state
             if (revealIdx === cleanChars.length) {
-                document.getElementById('grading-bar').classList.add('active-grading');
-                document.getElementById('example-display').style.display = 'block';
+                finalRevealReady = true;
             }
+        } 
+        // 2. Extra tap after the last character to show buttons/examples
+        else if (finalRevealReady) {
+            document.getElementById('grading-bar').classList.add('active-grading');
+            document.getElementById('example-display').style.display = 'block';
+            finalRevealReady = false; // Prevents multiple triggerings
         }
     }
 
@@ -300,8 +258,7 @@
 
     function togglePeace() {
         const isPeace = document.body.classList.toggle('peace-active');
-        const btn = document.getElementById('peace-toggle-btn');
-        btn.innerText = isPeace ? "🙈" : "👁️";
+        document.getElementById('peace-toggle-btn').innerText = isPeace ? "🙈" : "👁️";
     }
 </script>
 </body>
