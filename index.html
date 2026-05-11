@@ -24,54 +24,66 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            height: -webkit-fill-available;
             overflow: hidden;
         }
 
-        .screen { display: none; flex-direction: column; height: 100%; padding: 15px; }
+        .screen { display: none; flex-direction: column; height: 100%; width: 100%; padding: 15px; position: relative; }
         .active { display: flex; }
 
         /* --- SETUP SCREEN --- */
-        #setup-screen h2 { margin: 0 0 10px 0; color: var(--primary); }
+        #setup-screen { justify-content: flex-start; }
         textarea {
-            flex-grow: 1;
+            flex: 1; /* Grows to take almost all space */
             background: var(--surface);
             color: var(--text);
             border: 2px solid #333;
             border-radius: 12px;
             padding: 15px;
             font-size: 1.1rem;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             outline: none;
+            width: 100%;
         }
         .btn-start { 
+            height: 60px;
             background: var(--primary); 
             color: #000; 
             width: 100%; 
-            font-size: 1.5rem; 
+            font-size: 1.3rem; 
             font-weight: bold; 
-            height: 70px; 
             border: none; 
-            border-radius: 15px;
+            border-radius: 12px;
             flex-shrink: 0;
         }
 
         /* --- PRACTICE SCREEN --- */
-        #top-nav { display: flex; justify-content: space-between; align-items: center; height: 40px; margin-bottom: 5px; }
+        #top-nav { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            height: 40px; 
+            z-index: 10; /* Above the tap area */
+            pointer-events: none; 
+        }
+        #top-nav * { pointer-events: auto; }
+
         .btn-small { background: #333; color: #888; padding: 8px 12px; border-radius: 6px; border: none; font-size: 0.8rem; }
 
+        /* THE TAP AREA - NOW COVERS EVERYTHING */
         #main-tap-area {
-            flex-grow: 1;
-            background: var(--surface);
-            border-radius: 20px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             padding: 20px;
+            z-index: 1;
             cursor: pointer;
-            z-index: 1; /* Ensure it stays above other elements */
         }
 
         #pinyin-display { font-size: 2.2rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
@@ -84,13 +96,26 @@
             background: rgba(0,0,0,0.4); 
             border-radius: 12px;
             display: none; 
-            width: 100%;
+            width: 90%;
+            pointer-events: none;
         }
 
         /* --- CONTROLS --- */
-        .controls-area { padding: 15px 0; display: flex; flex-direction: column; gap: 10px; }
+        #controls-container {
+            position: absolute;
+            bottom: 60px; /* Leave space for the eye */
+            left: 15px;
+            right: 15px;
+            z-index: 5;
+            pointer-events: none; /* Let taps pass through to background */
+        }
         
-        .grading-bar { display: none; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grading-bar { 
+            display: none; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            pointer-events: auto; /* Buttons need to be clickable */
+        }
         .active-grading { display: grid; }
 
         button.huge { 
@@ -99,20 +124,24 @@
             font-weight: 900; 
             border: none; 
             border-radius: 20px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         .btn-correct { background: var(--secondary); color: #000; }
         .btn-wrong { background: var(--error); color: #000; }
         
+        /* THE EYE - PERMANENT BOTTOM */
         #peace-toggle-btn {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             background: transparent;
             border: none;
-            font-size: 3rem;
+            font-size: 1.5rem; /* Normal size */
             cursor: pointer;
-            padding: 10px;
-            opacity: 0.4;
-            transition: opacity 0.2s;
+            z-index: 20;
+            opacity: 0.5;
         }
-        #peace-toggle-btn:active { opacity: 1; }
 
         /* --- PEACE MODE STATE --- */
         body.peace-active #top-nav,
@@ -120,30 +149,29 @@
         body.peace-active #meaning-display,
         body.peace-active #char-display,
         body.peace-active #example-display,
-        body.peace-active .grading-bar {
-            visibility: hidden;
-        }
-
-        body.peace-active #main-tap-area {
-            background: transparent;
+        body.peace-active #controls-container {
+            visibility: hidden !important;
         }
     </style>
 </head>
 <body>
 
+    <!-- SETUP SCREEN -->
     <div id="setup-screen" class="screen active">
-        <h2>Input Word List</h2>
+        <h2 style="color:var(--primary); margin:0 0 10px 0;">Input Words</h2>
         <textarea id="input-data" placeholder="Paste your Chinese words here..."></textarea>
         <button class="btn-start" onclick="startPractice()">START SESSION</button>
     </div>
 
+    <!-- PRACTICE SCREEN -->
     <div id="practice-screen" class="screen">
         <div id="top-nav">
             <button class="btn-small" onclick="goBack()">← SETUP</button>
-            <div id="stats" style="color: var(--secondary); font-weight: bold;">PHASE 1 | 0/10</div>
+            <div id="stats" style="color: var(--secondary); font-weight: bold; pointer-events: none;">PHASE 1 | 0/10</div>
             <div style="width: 60px;"></div>
         </div>
 
+        <!-- This covers the whole screen -->
         <div id="main-tap-area" onclick="handleTap()">
             <div id="pinyin-display"></div>
             <div id="meaning-display"></div>
@@ -156,16 +184,14 @@
             </div>
         </div>
 
-        <div class="controls-area">
+        <div id="controls-container">
             <div id="grading-bar" class="grading-bar">
                 <button class="huge btn-wrong" onclick="grade(false)">WRONG</button>
                 <button class="huge btn-correct" onclick="grade(true)">RIGHT</button>
             </div>
-            
-            <center>
-                <button id="peace-toggle-btn" onclick="togglePeace()">👁️</button>
-            </center>
         </div>
+        
+        <button id="peace-toggle-btn" onclick="togglePeace()">👁️</button>
     </div>
 
 <script>
@@ -228,7 +254,7 @@
     }
 
     function handleTap() {
-        // Allow tap even in peace mode to progress character reveal
+        // We use Array.from to handle multi-character strings correctly
         const cleanChars = Array.from(currentWord.char.replace(/[\s+]/g, ''));
         if (revealIdx < cleanChars.length) {
             document.getElementById('char-display').innerText += cleanChars[revealIdx];
