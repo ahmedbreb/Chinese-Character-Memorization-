@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chinese Character Trainer</title>
+    <style>
+        :root {
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --primary: #bb86fc;
+            --text: #e0e0e0;
+            --text-dim: #a0a0a0;
+            --correct: #03dac6;
+            --wrong: #cf6679;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #header {
+            padding: 15px;
+            background: var(--surface);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        #display-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+            transition: opacity 0.3s;
+        }
+
+        .pinyin {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .characters {
+            font-size: 4rem;
+            letter-spacing: 10px;
+            min-height: 5rem;
+        }
+
+        #example-box {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            display: none;
+        }
+
+        .peace-mode #display-area {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #canvas-container {
+            position: relative;
+            background: #252525;
+            height: 300px;
+            width: 100%;
+            border-top: 2px solid var(--primary);
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .controls {
+            padding: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            background: var(--surface);
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .btn-main { background: var(--primary); color: #000; }
+        .btn-hide { background: #444; color: white; }
+        .btn-correct { background: var(--correct); color: #000; }
+        .btn-wrong { background: var(--wrong); color: #000; }
+        .full-width { grid-column: span 2; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="header">
+    <div id="word-info">Loading...</div>
+    <div id="stats">Phase: 1/2 | Correct: 0</div>
+</div>
+
+<div id="display-area">
+    <div id="prompt-pinyin" class="pinyin">Pinyin</div>
+    <div id="prompt-meaning" style="color: var(--text-dim)">Meaning</div>
+    <div id="char-reveal" class="characters"></div>
+    
+    <div id="example-box">
+        <div id="ex-cn"></div>
+        <div id="ex-py" style="color: var(--primary)"></div>
+        <div id="ex-en" style="color: var(--text-dim)"></div>
+    </div>
+</div>
+
+<div id="canvas-container">
+    <canvas id="paintCanvas"></canvas>
+</div>
+
+<div class="controls">
+    <button class="btn-hide full-width" onclick="togglePeace()">Toggle Peace Mode (Hide Info)</button>
+    <button id="reveal-btn" class="btn-main full-width" onclick="revealNextChar()">Reveal Next Character</button>
+    <button class="btn-hide" onclick="toggleExample()">Show/Hide Example</button>
+    <button class="btn-hide" onclick="clearCanvas()">Clear Canvas</button>
+    
+    <!-- Grading buttons hidden until word is finished -->
+    <button id="wrong-btn" class="btn-wrong hidden" onclick="grade(false)">Wrong</button>
+    <button id="correct-btn" class="btn-correct hidden" onclick="grade(true)">Correct</button>
+</div>
+
+<script>
+    // --- DATA ---
+    const rawData = `
+问候
+wènhòu
+to greet; greetings
+他 每天 早上 都 会 "问候" 邻居
+Tā měitiān zǎoshang dōu huì "wènhòu" línjū
+He greets his neighbors every morning
+
+说法
+shuōfǎ
+way of saying; expression
+这个 "说法" 听 起来 很 正式
+Zhège "shuōfǎ" tīng qǐlái hěn zhèngshì
+This "way of saying" sounds very formal
+
+生硬
+shēngyìng
+stiff; unnatural
+他 的 语气 有点 "生硬"
+Tā de yǔqì yǒudiǎn "shēngyìng"
+His tone is a bit "stiff"
+
+基本
+jīběn
+basic; fundamental
+这是 最 "基本" 的 礼貌
+Zhè shì zuì "jīběn" de lǐmào
+This is the most "basic" form of politeness
+
+礼节
+lǐjié
+etiquette; courtesy
+在 中国 有 很 多 传统 "礼节"
+Zài Zhōngguó yǒu hěn duō chuántǒng "lǐjié"
+There are many traditional "etiquette" rules in China
+
+首先
+shǒuxiān
+first; first of all
+"首先" 我们 要 打招呼
+"Shǒuxiān" wǒmen yào dǎzhāohu
+"First of all," we should greet each other
+
+客人
+kèrén
+guest
+"客人" 来 的 时候 要 热情 接待
+"Kèrén" lái de shíhou yào rèqíng jiēdài
+When a "guest" arrives, we should warmly welcome them
+
+主人
+zhǔrén
+host; owner
+"主人" 会 亲自 招待 客人
+"Zhǔrén" huì qīnzì zhāodài kèrén
+The "host" personally entertains the guests
+
+急着
+jízhe
+in a hurry; anxious to
+他 "急着" 离开 没 有 告别
+Tā "jízhe" líkāi méi yǒu gàobié
+He is "in a hurry" to leave without saying goodbye
+
+好像 + 似的
+hǎoxiàng + shìde
+as if; like
+他 说话 "好像" 很 生气 "似的"
+Tā shuōhuà "hǎoxiàng" hěn shēngqì "shìde"
+He speaks "as if" he were angry
+`;
+
+    // --- APP LOGIC ---
+    let words = [];
+    let currentWord = null;
+    let revealedIndex = 0;
+    let phase = 1; // 1: Target 5 hits, 2: Target 10 hits
+
+    function parseData() {
+        const blocks = rawData.trim().split('\n\n');
+        words = blocks.map(block => {
+            const lines = block.split('\n');
+            return {
+                char: lines[0],
+                pinyin: lines[1],
+                meaning: lines[2],
+                exCn: lines[3],
+                exPy: lines[4],
+                exEn: lines[5],
+                count: 0
+            };
+        });
+    }
+
+    function getNextWord() {
+        let pool = [];
+        
+        if (phase === 1) {
+            pool = words.filter(w => w.count < 5);
+            if (pool.length === 0) {
+                phase = 2;
+                return getNextWord();
+            }
+        } else {
+            pool = words.filter(w => w.count < 10);
+            if (pool.length === 0) {
+                alert("Study Session Complete! All words mastered 10 times.");
+                return null;
+            }
+        }
+
+        const randomIndex = Math.floor(Math.random() * pool.length);
+        currentWord = pool[randomIndex];
+        setupWord();
+    }
+
+    function setupWord() {
+        revealedIndex = 0;
+        document.getElementById('prompt-pinyin').innerText = currentWord.pinyin;
+        document.getElementById('prompt-meaning').innerText = currentWord.meaning;
+        document.getElementById('char-reveal').innerText = "";
+        document.getElementById('ex-cn').innerText = currentWord.exCn;
+        document.getElementById('ex-py').innerText = currentWord.exPy;
+        document.getElementById('ex-en').innerText = currentWord.exEn;
+        document.getElementById('example-box').style.display = "none";
+        document.getElementById('word-info').innerText = `Word Progress: ${currentWord.count}/10`;
+        document.getElementById('stats').innerText = `Phase: ${phase}/2`;
+        
+        // UI Reset
+        document.getElementById('reveal-btn').classList.remove('hidden');
+        document.getElementById('correct-btn').classList.add('hidden');
+        document.getElementById('wrong-btn').classList.add('hidden');
+        clearCanvas();
+    }
+
+    function revealNextChar() {
+        const chars = Array.from(currentWord.char.replace(/\s/g, '').replace('+', ''));
+        if (revealedIndex < chars.length) {
+            document.getElementById('char-reveal').innerText += chars[revealedIndex];
+            revealedIndex++;
+        }
+        
+        if (revealedIndex === chars.length) {
+            document.getElementById('reveal-btn').classList.add('hidden');
+            document.getElementById('correct-btn').classList.remove('hidden');
+            document.getElementById('wrong-btn').classList.remove('hidden');
+        }
+    }
+
+    function grade(isCorrect) {
+        if (isCorrect) currentWord.count++;
+        getNextWord();
+    }
+
+    function toggleExample() {
+        const box = document.getElementById('example-box');
+        box.style.display = box.style.display === "none" ? "block" : "none";
+    }
+
+    function togglePeace() {
+        document.body.classList.toggle('peace-mode');
+    }
+
+    // --- CANVAS DRAWING ---
+    const canvas = document.getElementById('paintCanvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    function resizeCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+    }
+
+    function startDraw(e) {
+        drawing = true;
+        draw(e);
+    }
+
+    function endDraw() {
+        drawing = false;
+        ctx.beginPath();
+    }
+
+    function draw(e) {
+        if (!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    window.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchmove', draw);
+    canvas.addEventListener('touchend', endDraw);
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- INIT ---
+    parseData();
+    resizeCanvas();
+    getNextWord();
+</script>
+
+</body>
+</html>
