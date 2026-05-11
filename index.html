@@ -12,6 +12,7 @@
             --secondary: #03dac6;
             --error: #cf6679;
             --text: #e0e0e0;
+            --peace-btn: #333333;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -27,10 +28,11 @@
             overflow: hidden;
         }
 
-        .screen { display: none; flex-direction: column; height: 100%; padding: 20px; }
+        .screen { display: none; flex-direction: column; height: 100%; padding: 15px; }
         .active { display: flex; }
 
         /* --- SETUP SCREEN --- */
+        #setup-screen { justify-content: space-between; }
         #setup-screen h2 { margin: 0 0 10px 0; color: var(--primary); }
         textarea {
             flex: 1;
@@ -40,14 +42,14 @@
             border-radius: 12px;
             padding: 15px;
             font-size: 1rem;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             outline: none;
         }
-        textarea:focus { border-color: var(--primary); }
+        .start-area { height: 80px; }
 
         /* --- PRACTICE SCREEN --- */
-        #top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .btn-small { background: #333; color: #ccc; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; border: none; }
+        #top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; height: 40px; }
+        .btn-small { background: #333; color: #888; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; border: none; }
 
         #main-tap-area {
             flex: 1;
@@ -59,42 +61,71 @@
             justify-content: center;
             text-align: center;
             cursor: pointer;
-            position: relative;
             padding: 20px;
+            overflow-y: auto;
         }
 
-        #pinyin-display { font-size: 2rem; color: var(--primary); font-weight: bold; }
-        #meaning-display { font-size: 1.1rem; opacity: 0.6; margin-bottom: 20px; }
-        #char-display { font-size: 5rem; letter-spacing: 10px; min-height: 6rem; }
+        #pinyin-display { font-size: 1.8rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
+        #meaning-display { font-size: 1rem; opacity: 0.6; margin-bottom: 15px; }
+        #char-display { font-size: 4.5rem; letter-spacing: 8px; min-height: 5.5rem; }
         
         #example-display { 
-            margin-top: 20px; 
-            font-size: 0.9rem; 
-            padding: 15px; 
-            background: rgba(0,0,0,0.3); 
+            margin-top: 15px; 
+            font-size: 0.85rem; 
+            padding: 12px; 
+            background: rgba(0,0,0,0.4); 
             border-radius: 10px;
-            display: none;
+            display: none; /* Auto-shown on finish */
+            width: 100%;
         }
 
-        /* --- HUGE BUTTONS --- */
-        .grading-footer { display: none; grid-template-columns: 1fr 1fr; gap: 15px; padding-top: 20px; height: 120px; }
+        /* --- BUTTONS --- */
+        .controls-area { padding-top: 15px; display: flex; flex-direction: column; gap: 10px; }
+        
+        .grading-bar { display: none; grid-template-columns: 1fr 1fr; gap: 12px; }
         .active-grading { display: grid; }
 
-        button.huge { font-size: 1.2rem; font-weight: bold; border: none; border-radius: 15px; text-transform: uppercase; }
+        button.huge { 
+            height: 100px; /* Bigger buttons */
+            font-size: 1.4rem; 
+            font-weight: bold; 
+            border: none; 
+            border-radius: 15px; 
+            text-transform: uppercase; 
+        }
         .btn-correct { background: var(--secondary); color: #000; }
         .btn-wrong { background: var(--error); color: #000; }
-        .btn-start { background: var(--primary); color: #000; padding: 20px; font-size: 1.5rem; }
-
-        /* --- PEACE MODE --- */
-        .peace-mode #pinyin-display, 
-        .peace-mode #meaning-display, 
-        .peace-mode #char-display, 
-        .peace-mode #example-display,
-        .peace-mode #top-nav { visibility: hidden; }
         
-        #peace-btn { z-index: 100; }
+        .btn-start { background: var(--primary); color: #000; width: 100%; font-size: 1.4rem; font-weight: bold; height: 60px; border: none; border-radius: 15px; }
 
-        .hidden { display: none !important; }
+        /* PEACE MODE TOGGLE */
+        .btn-peace-toggle {
+            background: transparent;
+            color: #333;
+            border: 1px solid #222;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- PEACE MODE STATE --- */
+        body.peace-active #top-nav,
+        body.peace-active #main-tap-area,
+        body.peace-active .grading-bar {
+            visibility: hidden;
+            pointer-events: none;
+        }
+        
+        /* Keep the toggle button visible and interactive during peace mode */
+        body.peace-active .btn-peace-toggle {
+            visibility: visible !important;
+            pointer-events: auto !important;
+            border-color: #333;
+            color: #555;
+            margin-top: -100px; /* Pull it up slightly in the void */
+        }
     </style>
 </head>
 <body>
@@ -102,16 +133,18 @@
     <!-- SETUP SCREEN -->
     <div id="setup-screen" class="screen active">
         <h2>Vocabulary Input</h2>
-        <textarea id="input-data" placeholder="Paste your Chinese words here..."></textarea>
-        <button class="huge btn-start" onclick="startPractice()">Start Session</button>
+        <textarea id="input-data" placeholder="Paste your list here (Word, Pinyin, Meaning, Sentence...)"></textarea>
+        <div class="start-area">
+            <button class="btn-start" onclick="startPractice()">Start Session</button>
+        </div>
     </div>
 
     <!-- PRACTICE SCREEN -->
     <div id="practice-screen" class="screen">
         <div id="top-nav">
             <button class="btn-small" onclick="goBack()">← Setup</button>
-            <div id="stats" style="font-size: 0.8rem; color: var(--secondary);">Phase 1 | 0/10</div>
-            <button id="peace-btn" class="btn-small" onclick="togglePeace()">Peace Mode</button>
+            <div id="stats" style="color: var(--secondary); font-weight: bold;">Phase 1 | 0/10</div>
+            <div style="width: 60px;"></div> <!-- Spacer -->
         </div>
 
         <div id="main-tap-area" onclick="handleTap()">
@@ -121,19 +154,21 @@
             
             <div id="example-display">
                 <div id="ex-cn"></div>
-                <div id="ex-py" style="color:var(--primary)"></div>
+                <div id="ex-py" style="color:var(--primary); margin: 4px 0;"></div>
                 <div id="ex-en" style="opacity:0.7"></div>
             </div>
-
-            <div id="tap-hint" style="position:absolute; bottom:10px; font-size:0.7rem; opacity:0.3;">TAP SCREEN TO REVEAL</div>
         </div>
 
-        <div id="grading-bar" class="grading-footer">
-            <button class="huge btn-wrong" onclick="grade(false)">Wrong</button>
-            <button class="huge btn-correct" onclick="grade(true)">Correct</button>
+        <div class="controls-area">
+            <div id="grading-bar" class="grading-bar">
+                <button class="huge btn-wrong" onclick="grade(false)">Wrong</button>
+                <button class="huge btn-correct" onclick="grade(true)">Correct</button>
+            </div>
+            
+            <button id="peace-toggle-btn" class="btn-peace-toggle" onclick="togglePeace()">
+                Peace Mode
+            </button>
         </div>
-
-        <button id="ex-toggle" class="btn-small" style="margin-top:10px; width:100%;" onclick="toggleExample()">Show/Hide Example</button>
     </div>
 
 <script>
@@ -192,11 +227,13 @@
         
         document.getElementById('grading-bar').classList.remove('active-grading');
         document.getElementById('example-display').style.display = 'none';
-        document.getElementById('tap-hint').style.display = 'block';
         updateStats();
     }
 
     function handleTap() {
+        // Don't allow taps if peace mode is active (to prevent accidental reveals)
+        if(document.body.classList.contains('peace-active')) return;
+
         const cleanChars = Array.from(currentWord.char.replace(/[\s+]/g, ''));
         if (revealIdx < cleanChars.length) {
             document.getElementById('char-display').innerText += cleanChars[revealIdx];
@@ -205,7 +242,7 @@
         
         if (revealIdx === cleanChars.length) {
             document.getElementById('grading-bar').classList.add('active-grading');
-            document.getElementById('tap-hint').style.display = 'none';
+            document.getElementById('example-display').style.display = 'block';
         }
     }
 
@@ -218,15 +255,10 @@
         document.getElementById('stats').innerText = `Phase ${phase} | ${currentWord.count}/10`;
     }
 
-    function toggleExample() {
-        const el = document.getElementById('example-display');
-        el.style.display = (el.style.display === 'none') ? 'block' : 'none';
-    }
-
     function togglePeace() {
-        document.body.classList.toggle('peace-mode');
-        const btn = document.getElementById('peace-btn');
-        btn.innerText = document.body.classList.contains('peace-mode') ? "EXIT PEACE" : "PEACE MODE";
+        const isPeace = document.body.classList.toggle('peace-active');
+        const btn = document.getElementById('peace-toggle-btn');
+        btn.innerText = isPeace ? "Exit Peace Mode" : "Peace Mode";
     }
 </script>
 </body>
