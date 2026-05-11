@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Chinese Writer Pro</title>
+    <title>Chinese Memory Pro</title>
     <style>
         :root {
             --bg: #121212;
@@ -24,99 +24,75 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            height: -webkit-fill-available;
             overflow: hidden;
         }
 
-        /* --- SCREEN MANAGEMENT --- */
-        .screen { display: none; flex-direction: column; height: 100%; padding: 15px; }
-        .screen.active { display: flex; }
+        .screen { display: none; flex-direction: column; height: 100%; padding: 20px; }
+        .active { display: flex; }
 
         /* --- SETUP SCREEN --- */
-        h2 { margin-top: 0; color: var(--primary); }
+        #setup-screen h2 { margin: 0 0 10px 0; color: var(--primary); }
         textarea {
             flex: 1;
             background: var(--surface);
             color: var(--text);
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 10px;
-            font-family: monospace;
-            resize: none;
-            margin-bottom: 15px;
-        }
-
-        /* --- PRACTICE SCREEN --- */
-        #stats-bar {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: var(--secondary);
-            margin-bottom: 5px;
-        }
-
-        #display-box {
-            background: var(--surface);
+            border: 2px solid #333;
             border-radius: 12px;
             padding: 15px;
-            text-align: center;
-            min-height: 160px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            outline: none;
+        }
+        textarea:focus { border-color: var(--primary); }
+
+        /* --- PRACTICE SCREEN --- */
+        #top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .btn-small { background: #333; color: #ccc; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; border: none; }
+
+        #main-tap-area {
+            flex: 1;
+            background: var(--surface);
+            border-radius: 20px;
             display: flex;
             flex-direction: column;
+            align-items: center;
             justify-content: center;
-            transition: opacity 0.2s;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            padding: 20px;
         }
 
-        .peace-mode #display-box { opacity: 0; }
-
-        #pinyin-prompt { font-size: 1.4rem; font-weight: bold; color: var(--primary); }
-        #meaning-prompt { font-size: 0.9rem; opacity: 0.7; margin-bottom: 10px; }
-        #char-display { font-size: 3.5rem; height: 4.5rem; letter-spacing: 5px; }
-
-        #example-box {
-            margin-top: 10px;
-            font-size: 0.85rem;
-            background: rgba(0,0,0,0.2);
-            padding: 8px;
-            border-radius: 5px;
+        #pinyin-display { font-size: 2rem; color: var(--primary); font-weight: bold; }
+        #meaning-display { font-size: 1.1rem; opacity: 0.6; margin-bottom: 20px; }
+        #char-display { font-size: 5rem; letter-spacing: 10px; min-height: 6rem; }
+        
+        #example-display { 
+            margin-top: 20px; 
+            font-size: 0.9rem; 
+            padding: 15px; 
+            background: rgba(0,0,0,0.3); 
+            border-radius: 10px;
             display: none;
         }
 
-        /* --- CANVAS --- */
-        #canvas-wrap {
-            flex: 1;
-            margin: 15px 0;
-            background: #252525;
-            border: 2px solid #333;
-            border-radius: 10px;
-            position: relative;
-            touch-action: none;
-        }
-        canvas { width: 100%; height: 100%; touch-action: none; }
+        /* --- HUGE BUTTONS --- */
+        .grading-footer { display: none; grid-template-columns: 1fr 1fr; gap: 15px; padding-top: 20px; height: 120px; }
+        .active-grading { display: grid; }
 
-        /* --- CONTROLS --- */
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            padding-bottom: 10px;
-        }
+        button.huge { font-size: 1.2rem; font-weight: bold; border: none; border-radius: 15px; text-transform: uppercase; }
+        .btn-correct { background: var(--secondary); color: #000; }
+        .btn-wrong { background: var(--error); color: #000; }
+        .btn-start { background: var(--primary); color: #000; padding: 20px; font-size: 1.5rem; }
 
-        button {
-            padding: 12px 5px;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-
-        .btn-p { background: var(--primary); color: #000; }
-        .btn-s { background: #444; color: #fff; }
-        .btn-ok { background: var(--secondary); color: #000; }
-        .btn-no { background: var(--error); color: #000; }
-        .wide { grid-column: span 2; }
+        /* --- PEACE MODE --- */
+        .peace-mode #pinyin-display, 
+        .peace-mode #meaning-display, 
+        .peace-mode #char-display, 
+        .peace-mode #example-display,
+        .peace-mode #top-nav { visibility: hidden; }
+        
+        #peace-btn { z-index: 100; }
 
         .hidden { display: none !important; }
     </style>
@@ -125,45 +101,39 @@
 
     <!-- SETUP SCREEN -->
     <div id="setup-screen" class="screen active">
-        <h2>Input Word List</h2>
-        <p style="font-size: 0.8rem; opacity: 0.7;">Paste your words below (6 lines per word block):</p>
-        <textarea id="input-data" placeholder="问候&#10;wènhòu&#10;to greet&#10;他 问候 邻居&#10;Tā wènhòu línjū&#10;He greets neighbors"></textarea>
-        <button class="btn-p wide" onclick="startApp()">Start Memorizing</button>
+        <h2>Vocabulary Input</h2>
+        <textarea id="input-data" placeholder="Paste your Chinese words here..."></textarea>
+        <button class="huge btn-start" onclick="startPractice()">Start Session</button>
     </div>
 
     <!-- PRACTICE SCREEN -->
     <div id="practice-screen" class="screen">
-        <div id="stats-bar">
-            <span id="stat-phase">Phase: 1/2</span>
-            <span id="stat-count">Word Progress: 0/10</span>
+        <div id="top-nav">
+            <button class="btn-small" onclick="goBack()">← Setup</button>
+            <div id="stats" style="font-size: 0.8rem; color: var(--secondary);">Phase 1 | 0/10</div>
+            <button id="peace-btn" class="btn-small" onclick="togglePeace()">Peace Mode</button>
         </div>
 
-        <div id="display-box">
-            <div id="pinyin-prompt">pīnyīn</div>
-            <div id="meaning-prompt">meaning</div>
+        <div id="main-tap-area" onclick="handleTap()">
+            <div id="pinyin-display"></div>
+            <div id="meaning-display"></div>
             <div id="char-display"></div>
-            <div id="example-box">
+            
+            <div id="example-display">
                 <div id="ex-cn"></div>
                 <div id="ex-py" style="color:var(--primary)"></div>
                 <div id="ex-en" style="opacity:0.7"></div>
             </div>
+
+            <div id="tap-hint" style="position:absolute; bottom:10px; font-size:0.7rem; opacity:0.3;">TAP SCREEN TO REVEAL</div>
         </div>
 
-        <div id="canvas-wrap">
-            <canvas id="paintCanvas"></canvas>
+        <div id="grading-bar" class="grading-footer">
+            <button class="huge btn-wrong" onclick="grade(false)">Wrong</button>
+            <button class="huge btn-correct" onclick="grade(true)">Correct</button>
         </div>
 
-        <div class="controls">
-            <button class="btn-s" onclick="togglePeace()">Peace Mode</button>
-            <button class="btn-s" onclick="toggleExample()">Example</button>
-            
-            <button id="btn-reveal" class="btn-p wide" onclick="handleReveal()">Reveal Next Character</button>
-            
-            <button id="btn-wrong" class="btn-no hidden" onclick="handleGrade(false)">Wrong</button>
-            <button id="btn-correct" class="btn-ok hidden" onclick="handleGrade(true)">Correct</button>
-            
-            <button class="btn-s wide" onclick="clearCanvas()">Clear Writing</button>
-        </div>
+        <button id="ex-toggle" class="btn-small" style="margin-top:10px; width:100%;" onclick="toggleExample()">Show/Hide Example</button>
     </div>
 
 <script>
@@ -172,11 +142,10 @@
     let revealIdx = 0;
     let phase = 1;
 
-    // --- NAVIGATION ---
-    function startApp() {
+    function startPractice() {
         const text = document.getElementById('input-data').value.trim();
-        if(!text) return alert("Please paste some words first!");
-        
+        if(!text) return alert("Paste words first!");
+
         const blocks = text.split(/\n\s*\n/);
         words = blocks.map(block => {
             const lines = block.split('\n').map(l => l.trim());
@@ -193,11 +162,14 @@
 
         document.getElementById('setup-screen').classList.remove('active');
         document.getElementById('practice-screen').classList.add('active');
-        resizeCanvas();
         nextWord();
     }
 
-    // --- LOGIC ---
+    function goBack() {
+        document.getElementById('setup-screen').classList.add('active');
+        document.getElementById('practice-screen').classList.remove('active');
+    }
+
     function nextWord() {
         let pool = [];
         if (phase === 1) {
@@ -205,31 +177,26 @@
             if (pool.length === 0) { phase = 2; return nextWord(); }
         } else {
             pool = words.filter(w => w.count < 10);
-            if (pool.length === 0) {
-                alert("Session Complete!");
-                location.reload();
-                return;
-            }
+            if (pool.length === 0) { alert("Session Done!"); return goBack(); }
         }
 
         currentWord = pool[Math.floor(Math.random() * pool.length)];
         revealIdx = 0;
         
-        // UI Reset
-        document.getElementById('pinyin-prompt').innerText = currentWord.pinyin;
-        document.getElementById('meaning-prompt').innerText = currentWord.meaning;
+        document.getElementById('pinyin-display').innerText = currentWord.pinyin;
+        document.getElementById('meaning-display').innerText = currentWord.meaning;
         document.getElementById('char-display').innerText = "";
         document.getElementById('ex-cn').innerText = currentWord.exCn;
         document.getElementById('ex-py').innerText = currentWord.exPy;
         document.getElementById('ex-en').innerText = currentWord.exEn;
-        document.getElementById('example-box').style.display = "none";
         
+        document.getElementById('grading-bar').classList.remove('active-grading');
+        document.getElementById('example-display').style.display = 'none';
+        document.getElementById('tap-hint').style.display = 'block';
         updateStats();
-        toggleButtons(false);
-        clearCanvas();
     }
 
-    function handleReveal() {
+    function handleTap() {
         const cleanChars = Array.from(currentWord.char.replace(/[\s+]/g, ''));
         if (revealIdx < cleanChars.length) {
             document.getElementById('char-display').innerText += cleanChars[revealIdx];
@@ -237,73 +204,30 @@
         }
         
         if (revealIdx === cleanChars.length) {
-            toggleButtons(true);
+            document.getElementById('grading-bar').classList.add('active-grading');
+            document.getElementById('tap-hint').style.display = 'none';
         }
     }
 
-    function handleGrade(isCorrect) {
+    function grade(isCorrect) {
         if(isCorrect) currentWord.count++;
         nextWord();
     }
 
-    function toggleButtons(isFinished) {
-        document.getElementById('btn-reveal').classList.toggle('hidden', isFinished);
-        document.getElementById('btn-correct').classList.toggle('hidden', !isFinished);
-        document.getElementById('btn-wrong').classList.toggle('hidden', !isFinished);
-    }
-
     function updateStats() {
-        document.getElementById('stat-phase').innerText = `Phase: ${phase}/2`;
-        document.getElementById('stat-count').innerText = `Progress: ${currentWord.count}/10`;
+        document.getElementById('stats').innerText = `Phase ${phase} | ${currentWord.count}/10`;
     }
 
     function toggleExample() {
-        const el = document.getElementById('example-box');
+        const el = document.getElementById('example-display');
         el.style.display = (el.style.display === 'none') ? 'block' : 'none';
     }
 
     function togglePeace() {
         document.body.classList.toggle('peace-mode');
+        const btn = document.getElementById('peace-btn');
+        btn.innerText = document.body.classList.contains('peace-mode') ? "EXIT PEACE" : "PEACE MODE";
     }
-
-    // --- CANVAS ---
-    const canvas = document.getElementById('paintCanvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false;
-
-    function resizeCanvas() {
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-    }
-
-    function getPos(e) {
-        const rect = canvas.getBoundingClientRect();
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-        return [clientX - rect.left, clientY - rect.top];
-    }
-
-    function start(e) { drawing = true; const [x,y] = getPos(e); ctx.beginPath(); ctx.moveTo(x,y); }
-    function move(e) { 
-        if(!drawing) return; 
-        const [x,y] = getPos(e); 
-        ctx.lineTo(x,y); 
-        ctx.stroke(); 
-    }
-    function stop() { drawing = false; }
-    function clearCanvas() { ctx.clearRect(0,0,canvas.width, canvas.height); }
-
-    canvas.addEventListener('mousedown', start);
-    canvas.addEventListener('mousemove', move);
-    window.addEventListener('mouseup', stop);
-    canvas.addEventListener('touchstart', start);
-    canvas.addEventListener('touchmove', move);
-    canvas.addEventListener('touchend', stop);
-    window.addEventListener('resize', resizeCanvas);
 </script>
 </body>
 </html>
