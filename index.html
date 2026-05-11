@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Chinese Memory Pro</title>
     <style>
         :root {
@@ -21,39 +21,57 @@
             color: var(--text);
             font-family: sans-serif;
             margin: 0;
+            /* Use dvh (Dynamic Viewport Height) for Chrome Android mobile */
+            height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
             overflow: hidden;
         }
 
-        .screen { display: none; flex-direction: column; height: 100%; width: 100%; padding: 15px; position: relative; }
+        /* Standard Screen Layout */
+        .screen { 
+            display: none; 
+            flex-direction: column; 
+            height: 100%; 
+            width: 100%; 
+            padding: 15px; 
+            position: relative;
+        }
         .active { display: flex; }
 
-        /* --- SETUP SCREEN --- */
+        /* --- SETUP SCREEN (Optimized for Chrome Android) --- */
         #setup-screen { justify-content: flex-start; }
+        
         textarea {
-            flex: 1; /* Grows to take almost all space */
+            width: 100%;
+            flex: 1; /* Grows to use all available space */
             background: var(--surface);
             color: var(--text);
             border: 2px solid #333;
             border-radius: 12px;
             padding: 15px;
             font-size: 1.1rem;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             outline: none;
-            width: 100%;
+            resize: none;
         }
+
+        .start-btn-wrap { 
+            height: 70px; 
+            width: 100%; 
+            padding-bottom: 10px;
+        }
+        
         .btn-start { 
             height: 60px;
             background: var(--primary); 
             color: #000; 
             width: 100%; 
-            font-size: 1.3rem; 
+            font-size: 1.4rem; 
             font-weight: bold; 
             border: none; 
-            border-radius: 12px;
-            flex-shrink: 0;
+            border-radius: 15px;
         }
 
         /* --- PRACTICE SCREEN --- */
@@ -61,137 +79,137 @@
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            height: 40px; 
-            z-index: 10; /* Above the tap area */
-            pointer-events: none; 
+            height: 45px; 
+            z-index: 10;
         }
-        #top-nav * { pointer-events: auto; }
+        
+        .btn-small { background: #333; color: #888; padding: 8px 14px; border-radius: 8px; border: none; font-size: 0.85rem; font-weight: bold; }
 
-        .btn-small { background: #333; color: #888; padding: 8px 12px; border-radius: 6px; border: none; font-size: 0.8rem; }
-
-        /* THE TAP AREA - NOW COVERS EVERYTHING */
+        /* MAIN TAP AREA */
         #main-tap-area {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            text-align: center;
             padding: 20px;
             z-index: 1;
-            cursor: pointer;
+            width: 100%;
         }
 
         #pinyin-display { font-size: 2.2rem; color: var(--primary); font-weight: bold; margin-bottom: 5px; }
         #meaning-display { font-size: 1.2rem; opacity: 0.6; margin-bottom: 15px; }
-        #char-display { font-size: 5rem; letter-spacing: 10px; min-height: 6rem; }
+        #char-display { font-size: 6.5rem; letter-spacing: 8px; min-height: 7.5rem; line-height: 1; transition: opacity 0.2s; }
         
         #example-display { 
-            margin-top: 20px; 
+            margin-top: 15px; 
             padding: 15px; 
-            background: rgba(0,0,0,0.4); 
+            background: rgba(0,0,0,0.5); 
             border-radius: 12px;
             display: none; 
-            width: 90%;
+            width: 100%;
             pointer-events: none;
+            text-align: left;
         }
 
-        /* --- CONTROLS --- */
+        /* BUTTON ZONE (Absolute within practice screen to stay clear of nav bars) */
         #controls-container {
-            position: absolute;
-            bottom: 60px; /* Leave space for the eye */
-            left: 15px;
-            right: 15px;
+            width: 100%;
+            padding-bottom: 70px; /* Space for the Eye icon */
             z-index: 5;
-            pointer-events: none; /* Let taps pass through to background */
+            pointer-events: none;
         }
         
         .grading-bar { 
             display: none; 
             grid-template-columns: 1fr 1fr; 
             gap: 15px; 
-            pointer-events: auto; /* Buttons need to be clickable */
+            pointer-events: auto; 
         }
         .active-grading { display: grid; }
 
         button.huge { 
-            height: 140px; 
+            height: 120px; 
             font-size: 1.8rem; 
             font-weight: 900; 
             border: none; 
             border-radius: 20px; 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
         .btn-correct { background: var(--secondary); color: #000; }
         .btn-wrong { background: var(--error); color: #000; }
         
-        /* THE EYE - PERMANENT BOTTOM */
+        /* THE EYE - FIXED TO PREVENT DISAPPEARING */
         #peace-toggle-btn {
             position: absolute;
             bottom: 10px;
             left: 50%;
             transform: translateX(-50%);
-            background: transparent;
-            border: none;
-            font-size: 1.5rem; /* Normal size */
+            background: rgba(255,255,255,0.08);
+            border: 1px solid #333;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
             cursor: pointer;
-            z-index: 20;
-            opacity: 0.5;
         }
 
-        /* --- PEACE MODE STATE --- */
+        /* PEACE MODE STATE */
         body.peace-active #top-nav,
         body.peace-active #pinyin-display,
         body.peace-active #meaning-display,
         body.peace-active #char-display,
         body.peace-active #example-display,
         body.peace-active #controls-container {
-            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
         }
+        
+        body.peace-active #main-tap-area { background: transparent; }
     </style>
 </head>
-<body>
+<body onclick="handleGlobalClick(event)">
 
     <!-- SETUP SCREEN -->
     <div id="setup-screen" class="screen active">
-        <h2 style="color:var(--primary); margin:0 0 10px 0;">Input Words</h2>
+        <h2 style="margin:0 0 10px 0;">Chinese Vocab Input</h2>
         <textarea id="input-data" placeholder="Paste your Chinese words here..."></textarea>
-        <button class="btn-start" onclick="startPractice()">START SESSION</button>
+        <div class="start-btn-wrap">
+            <button class="btn-start" onclick="startPractice()">START SESSION</button>
+        </div>
     </div>
 
     <!-- PRACTICE SCREEN -->
     <div id="practice-screen" class="screen">
         <div id="top-nav">
             <button class="btn-small" onclick="goBack()">← SETUP</button>
-            <div id="stats" style="color: var(--secondary); font-weight: bold; pointer-events: none;">PHASE 1 | 0/10</div>
-            <div style="width: 60px;"></div>
+            <div id="stats" style="color: var(--secondary); font-weight: bold; font-family: monospace;">PHASE 1 | 0/10</div>
+            <div style="width: 70px;"></div>
         </div>
 
-        <!-- This covers the whole screen -->
-        <div id="main-tap-area" onclick="handleTap()">
+        <div id="main-tap-area">
             <div id="pinyin-display"></div>
             <div id="meaning-display"></div>
             <div id="char-display"></div>
             
             <div id="example-display">
-                <div id="ex-cn" style="font-size: 1.1rem; margin-bottom: 5px;"></div>
-                <div id="ex-py" style="color:var(--primary); margin-bottom: 5px;"></div>
-                <div id="ex-en" style="opacity:0.7;"></div>
+                <div id="ex-cn" style="font-size: 1.2rem; margin-bottom: 5px; font-weight:bold; color:white;"></div>
+                <div id="ex-py" style="color:var(--primary); margin-bottom: 5px; font-style: italic;"></div>
+                <div id="ex-en" style="opacity:0.8; font-size: 0.9rem;"></div>
             </div>
         </div>
 
         <div id="controls-container">
             <div id="grading-bar" class="grading-bar">
-                <button class="huge btn-wrong" onclick="grade(false)">WRONG</button>
-                <button class="huge btn-correct" onclick="grade(true)">RIGHT</button>
+                <button class="huge btn-wrong" onclick="grade(false); event.stopPropagation();">WRONG</button>
+                <button class="huge btn-correct" onclick="grade(true); event.stopPropagation();">RIGHT</button>
             </div>
         </div>
         
-        <button id="peace-toggle-btn" onclick="togglePeace()">👁️</button>
+        <div id="peace-toggle-btn" onclick="togglePeace(); event.stopPropagation();">👁️</div>
     </div>
 
 <script>
@@ -202,7 +220,7 @@
 
     function startPractice() {
         const text = document.getElementById('input-data').value.trim();
-        if(!text) return alert("Please paste words first.");
+        if(!text) return alert("Paste words first!");
 
         const blocks = text.split(/\n\s*\n/);
         words = blocks.map(block => {
@@ -253,17 +271,21 @@
         updateStats();
     }
 
-    function handleTap() {
-        // We use Array.from to handle multi-character strings correctly
+    // This handles the tap-anywhere logic
+    function handleGlobalClick(e) {
+        // Don't trigger if setup screen or peace mode is active
+        if (!document.getElementById('practice-screen').classList.contains('active')) return;
+        if (document.body.classList.contains('peace-active')) return;
+
         const cleanChars = Array.from(currentWord.char.replace(/[\s+]/g, ''));
         if (revealIdx < cleanChars.length) {
             document.getElementById('char-display').innerText += cleanChars[revealIdx];
             revealIdx++;
-        }
-        
-        if (revealIdx === cleanChars.length) {
-            document.getElementById('grading-bar').classList.add('active-grading');
-            document.getElementById('example-display').style.display = 'block';
+            
+            if (revealIdx === cleanChars.length) {
+                document.getElementById('grading-bar').classList.add('active-grading');
+                document.getElementById('example-display').style.display = 'block';
+            }
         }
     }
 
