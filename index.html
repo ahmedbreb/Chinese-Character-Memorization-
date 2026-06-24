@@ -32,6 +32,29 @@
 
         /* --- SETUP SCREEN --- */
         #setup-screen { justify-content: flex-start; }
+        
+        .setup-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .btn-clear {
+            background: #333;
+            color: var(--error);
+            border: 1px solid rgba(207, 102, 121, 0.2);
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .btn-clear:active {
+            background: rgba(207, 102, 121, 0.1);
+        }
+
         textarea {
             width: 100%;
             flex: 1;
@@ -55,6 +78,7 @@
             border: none; 
             border-radius: 15px;
             margin-bottom: 10px;
+            flex-shrink: 0;
         }
 
         /* --- PRACTICE SCREEN --- */
@@ -100,7 +124,6 @@
         .btn-correct { background: var(--secondary); color: #000; }
         .btn-wrong { background: var(--error); color: #000; }
         
-        /* FAINT EYE BUTTON */
         #peace-toggle-btn {
             position: absolute;
             bottom: 15px;
@@ -115,11 +138,10 @@
             align-items: center;
             justify-content: center;
             z-index: 999;
-            opacity: 0.15; /* Very faint */
+            opacity: 0.15; 
             cursor: pointer;
         }
 
-        /* PEACE MODE */
         body.peace-active #top-nav,
         body.peace-active #pinyin-display,
         body.peace-active #meaning-display,
@@ -133,12 +155,17 @@
 </head>
 <body onclick="handleGlobalClick(event)">
 
+    <!-- SETUP SCREEN -->
     <div id="setup-screen" class="screen active">
-        <h2 style="margin:0 0 10px 0;">Vocabulary Input</h2>
+        <div class="setup-header-row">
+            <h2 style="margin:0; color: var(--text);">Vocabulary Input</h2>
+            <button class="btn-clear" onclick="clearText()">CLEAR TEXT</button>
+        </div>
         <textarea id="input-data" placeholder="Paste your words here..."></textarea>
         <button class="btn-start" onclick="startPractice()">START SESSION</button>
     </div>
 
+    <!-- PRACTICE SCREEN -->
     <div id="practice-screen" class="screen">
         <div id="top-nav">
             <button class="btn-small" onclick="goBack()">← SETUP</button>
@@ -174,6 +201,11 @@
     let revealIdx = 0;
     let phase = 1;
     let finalRevealReady = false;
+
+    function clearText() {
+        document.getElementById('input-data').value = "";
+        document.getElementById('input-data').focus();
+    }
 
     function startPractice() {
         const text = document.getElementById('input-data').value.trim();
@@ -230,20 +262,17 @@
 
         const cleanChars = Array.from(currentWord.char.replace(/[\s+]/g, ''));
         
-        // 1. Reveal characters one by one
         if (revealIdx < cleanChars.length) {
             document.getElementById('char-display').innerText += cleanChars[revealIdx];
             revealIdx++;
-            // If that was the last character, prepare the final reveal state
             if (revealIdx === cleanChars.length) {
                 finalRevealReady = true;
             }
         } 
-        // 2. Extra tap after the last character to show buttons/examples
         else if (finalRevealReady) {
             document.getElementById('grading-bar').classList.add('active-grading');
             document.getElementById('example-display').style.display = 'block';
-            finalRevealReady = false; // Prevents multiple triggerings
+            finalRevealReady = false; 
         }
     }
 
