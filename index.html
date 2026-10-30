@@ -51,9 +51,7 @@
             font-weight: bold;
             cursor: pointer;
         }
-        .btn-clear:active {
-            background: rgba(207, 102, 121, 0.1);
-        }
+        .btn-clear:active { background: rgba(207, 102, 121, 0.1); }
 
         textarea {
             width: 100%;
@@ -179,7 +177,7 @@
             <div id="char-display"></div>
             
             <div id="example-display">
-                <div id="ex-cn" style="font-size: 1.2rem; margin-bottom: 5px; font-weight:bold; color:white;"></div>
+                <div id="ex-cn" style="font-size: 1.3rem; margin-bottom: 8px; font-weight:bold; letter-spacing: 2px;"></div>
                 <div id="ex-py" style="color:var(--primary); margin-bottom: 5px; font-style: italic;"></div>
                 <div id="ex-en" style="opacity:0.8; font-size: 0.9rem;"></div>
             </div>
@@ -233,6 +231,37 @@
         document.getElementById('practice-screen').classList.remove('active');
     }
 
+    // Tone color mapper based on pinyin vowels
+    function getToneColor(syllable) {
+        if (/[āēīōūǖ]/.test(syllable)) return '#4da6ff'; // 1st tone: Blue
+        if (/[áéíóúǘ]/.test(syllable)) return '#03dac6'; // 2nd tone: Green
+        if (/[ǎěǐǒǔǚ]/.test(syllable)) return '#ff9e42'; // 3rd tone: Orange
+        if (/[àèìòùǜ]/.test(syllable)) return '#cf6679'; // 4th tone: Red
+        return '#a0a0a0'; // Neutral / Light: Silver
+    }
+
+    function renderColorizedExample(cnText, pyText) {
+        const cnContainer = document.getElementById('ex-cn');
+        cnContainer.innerHTML = "";
+        
+        const cnTokens = Array.from(cnText.replace(/["“”]/g, '')); // clean up quotes for alignment mapping
+        const pySyllables = pyText.replace(/["“”]/g, '').split(/\s+/);
+
+        // Map character by character using corresponding pinyin syllable tone
+        cnTokens.forEach((char, index) => {
+            const span = document.createElement('span');
+            span.innerText = char;
+            
+            // Check if there is a matching pinyin syllable index
+            if (index < pySyllables.length) {
+                span.style.color = getToneColor(pySyllables[index]);
+            } else {
+                span.style.color = '#a0a0a0'; // default fallback
+            }
+            cnContainer.appendChild(span);
+        });
+    }
+
     function nextWord() {
         let pool = (phase === 1) ? words.filter(w => w.count < 5) : words.filter(w => w.count < 10);
         if (pool.length === 0) {
@@ -247,9 +276,11 @@
         document.getElementById('char-display').innerText = "";
         document.getElementById('pinyin-display').innerText = currentWord.pinyin;
         document.getElementById('meaning-display').innerText = currentWord.meaning;
-        document.getElementById('ex-cn').innerText = currentWord.exCn;
         document.getElementById('ex-py').innerText = currentWord.exPy;
         document.getElementById('ex-en').innerText = currentWord.exEn;
+        
+        // Render the newly colorized example sentence
+        renderColorizedExample(currentWord.exCn, currentWord.exPy);
         
         document.getElementById('grading-bar').classList.remove('active-grading');
         document.getElementById('example-display').style.display = 'none';
