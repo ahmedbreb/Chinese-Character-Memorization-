@@ -177,7 +177,7 @@
             <div id="char-display"></div>
             
             <div id="example-display">
-                <div id="ex-cn" style="font-size: 1.3rem; margin-bottom: 8px; font-weight:bold; letter-spacing: 2px;"></div>
+                <div id="ex-cn" style="font-size: 1.2rem; margin-bottom: 5px; font-weight:bold; color:white;"></div>
                 <div id="ex-py" style="color:var(--primary); margin-bottom: 5px; font-style: italic;"></div>
                 <div id="ex-en" style="opacity:0.8; font-size: 0.9rem;"></div>
             </div>
@@ -231,66 +231,6 @@
         document.getElementById('practice-screen').classList.remove('active');
     }
 
-    function getToneColor(syllable) {
-        if (!syllable) return '#a0a0a0';
-        if (/[āēīōūǖ]/.test(syllable)) return '#4da6ff'; // 1st tone: Blue
-        if (/[áéíóúǘ]/.test(syllable)) return '#2e8b57'; // 2nd tone: Dark Green
-        if (/[ǎěǐǒǔǚ]/.test(syllable)) return '#ff9e42'; // 3rd tone: Orange
-        if (/[àèìòùǜ]/.test(syllable)) return '#cf6679'; // 4th tone: Red
-        return '#a0a0a0'; // Neutral / Light: Silver
-    }
-
-    // Split pinyin into individual tone-bearing syllables even inside quotes (e.g., "jiéhé" -> ["jié", "hé"])
-    function extractPinyinSyllables(pyText) {
-        // Match pinyin words/syllables including diacritics
-        const matches = pyText.match(/[a-zA-ZāēīōūǖáéíóúǘǎěǐǒǔǚàèìòùǜüÜ]+/g) || [];
-        const syllables = [];
-
-        matches.forEach(token => {
-            // Split multi-syllable compound pinyin words if tone marks appear multiple times
-            const subSyllables = token.match(/([^āēīōūǖáéíóúǘǎěǐǒǔǚàèìòùǜ]*[āēīōūǖáéíóúǘǎěǐǒǔǚàèìòùǜa-officer-zA-Z]+)/g) || [token];
-            
-            // Refined regex to separate pinyin syllables (e.g. jiéhé -> jié, hé)
-            const splitRegex = /([b-df-hj-nq-rt-vwxyz]*[a-zA-Z]*[āēīōūǖáéíóúǘǎěǐǒǔǚàèìòùǜ][a-zA-Z]*|a[ng]|e[ng]|o[ng]|[a-zA-Z]+)/gi;
-            const parts = token.match(splitRegex);
-            
-            if (parts && parts.length > 0) {
-                parts.forEach(p => syllables.push(p));
-            } else {
-                syllables.push(token);
-            }
-        });
-        return syllables;
-    }
-
-    function renderColorizedExample(cnText, pyText) {
-        const cnContainer = document.getElementById('ex-cn');
-        cnContainer.innerHTML = "";
-
-        const syllables = extractPinyinSyllables(pyText);
-        let sylIdx = 0;
-
-        // Traverse Chinese string keeping formatting intact
-        for (let char of cnText) {
-            const span = document.createElement('span');
-            span.innerText = char;
-
-            // Check if character is a CJK character (Chinese Character)
-            if (/[\u4e00-\u9fa5]/.test(char)) {
-                if (sylIdx < syllables.length) {
-                    span.style.color = getToneColor(syllables[sylIdx]);
-                    sylIdx++;
-                } else {
-                    span.style.color = '#a0a0a0';
-                }
-            } else {
-                // Keep spaces, quotes, and punctuation uncolored/default
-                span.style.color = 'inherit';
-            }
-            cnContainer.appendChild(span);
-        }
-    }
-
     function nextWord() {
         let pool = (phase === 1) ? words.filter(w => w.count < 5) : words.filter(w => w.count < 10);
         if (pool.length === 0) {
@@ -305,10 +245,9 @@
         document.getElementById('char-display').innerText = "";
         document.getElementById('pinyin-display').innerText = currentWord.pinyin;
         document.getElementById('meaning-display').innerText = currentWord.meaning;
+        document.getElementById('ex-cn').innerText = currentWord.exCn;
         document.getElementById('ex-py').innerText = currentWord.exPy;
         document.getElementById('ex-en').innerText = currentWord.exEn;
-        
-        renderColorizedExample(currentWord.exCn, currentWord.exPy);
         
         document.getElementById('grading-bar').classList.remove('active-grading');
         document.getElementById('example-display').style.display = 'none';
