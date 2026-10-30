@@ -231,10 +231,9 @@
         document.getElementById('practice-screen').classList.remove('active');
     }
 
-    // Tone color mapper based on pinyin vowels
     function getToneColor(syllable) {
         if (/[āēīōūǖ]/.test(syllable)) return '#4da6ff'; // 1st tone: Blue
-        if (/[áéíóúǘ]/.test(syllable)) return '#03dac6'; // 2nd tone: Green
+        if (/[áéíóúǘ]/.test(syllable)) return '#2e8b57'; // 2nd tone: Darker Green (SeaGreen)
         if (/[ǎěǐǒǔǚ]/.test(syllable)) return '#ff9e42'; // 3rd tone: Orange
         if (/[àèìòùǜ]/.test(syllable)) return '#cf6679'; // 4th tone: Red
         return '#a0a0a0'; // Neutral / Light: Silver
@@ -244,19 +243,22 @@
         const cnContainer = document.getElementById('ex-cn');
         cnContainer.innerHTML = "";
         
-        const cnTokens = Array.from(cnText.replace(/["“”]/g, '')); // clean up quotes for alignment mapping
+        // Extract individual characters, ignoring spaces and quotes
+        const cnChars = Array.from(cnText).filter(c => !/\s/.test(c) && c !== '"' && c !== '“' && c !== '”');
+        // Extract individual pinyin syllables, ignoring spaces and quotes
         const pySyllables = pyText.replace(/["“”]/g, '').split(/\s+/);
 
-        // Map character by character using corresponding pinyin syllable tone
-        cnTokens.forEach((char, index) => {
+        let pyIndex = 0;
+        cnChars.forEach((char) => {
             const span = document.createElement('span');
             span.innerText = char;
             
-            // Check if there is a matching pinyin syllable index
-            if (index < pySyllables.length) {
-                span.style.color = getToneColor(pySyllables[index]);
+            // Look up corresponding pinyin syllable strictly in order
+            if (pyIndex < pySyllables.length) {
+                span.style.color = getToneColor(pySyllables[pyIndex]);
+                pyIndex++;
             } else {
-                span.style.color = '#a0a0a0'; // default fallback
+                span.style.color = '#a0a0a0'; 
             }
             cnContainer.appendChild(span);
         });
@@ -279,7 +281,6 @@
         document.getElementById('ex-py').innerText = currentWord.exPy;
         document.getElementById('ex-en').innerText = currentWord.exEn;
         
-        // Render the newly colorized example sentence
         renderColorizedExample(currentWord.exCn, currentWord.exPy);
         
         document.getElementById('grading-bar').classList.remove('active-grading');
